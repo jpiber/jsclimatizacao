@@ -1,11 +1,12 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
 import Home from "@/pages/Home";
 import Login from "@/pages/Login";
 import Dashboard from "@/pages/Dashboard";
+import NotFound from "@/pages/NotFound";
 
 // One <Route> per page in src/pages; BrowserRouter already wraps this in main.tsx.
-// The catch-all keeps unknown URLs from rendering a blank page.
+// Unknown URLs render the custom 404 page (not a silent redirect).
 export default function App() {
   return (
     <>
@@ -13,7 +14,7 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
       <Toaster />
     </>

@@ -21,6 +21,7 @@ import type { LoginRequest, SessionUser } from "@/lib/types";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useDocumentTitle } from "@/lib/useDocumentTitle";
 
 const ASSURANCES = [
   {
@@ -41,6 +42,10 @@ const ASSURANCES = [
 ];
 
 export default function Login() {
+  useDocumentTitle(
+    "Área do Dono — Entrar",
+    "Acesso restrito ao dono da JS Climatização para ver e gerenciar os agendamentos recebidos.",
+  );
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

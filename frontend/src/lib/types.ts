@@ -56,5 +56,19 @@ export interface LoginRequest {
 // Mirror of GET /api/meta
 export interface SiteMeta {
   today: string;
+  tomorrow: string;
   empresa: string;
+}
+
+// Mirror of backend/models/appointment.py::ReminderItem (GET /appointments/reminders)
+export interface ReminderItem {
+  id: string;
+  nome: string;
+  servico: string;
+  data: string;
+  periodo: string | null;
+  numero: string;
+  whatsapp_url: string;
+  message: string;
+  reminder_sent: boolean;
 }

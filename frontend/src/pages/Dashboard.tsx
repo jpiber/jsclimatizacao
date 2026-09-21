@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   AlertTriangle,
+  Bell,
   Calendar,
   CalendarDays,
   CheckCircle2,
@@ -20,7 +21,7 @@ import {
 import { apiDelete, apiGet, apiPatch } from "@/lib/api";
 import { formatDateBR, maskCPF, maskPhone, onlyDigits } from "@/lib/format";
 import { SESSION_QUERY_KEY, endSession, fetchSessionUser } from "@/lib/session";
-import type { Appointment, AppointmentStatus, SiteMeta } from "@/lib/types";
+import type { Appointment, AppointmentStatus, ReminderItem, SiteMeta } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -42,6 +43,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useDocumentTitle } from "@/lib/useDocumentTitle";
 
 type FilterValue = "todos" | "instalacao" | "manutencao" | "pendente" | "atendido";
 
@@ -93,10 +95,12 @@ function StatCard(props: {
 }
 
 export default function Dashboard() {
+  useDocumentTitle("Painel do Dono — Agendamentos");
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState<FilterValue>("todos");
   const [search, setSearch] = useState("");
+  const [dateFilter, setDateFilter] = useState("");
   const [toDelete, setToDelete] = useState<Appointment | null>(null);
 
   const session = useQuery({
@@ -115,6 +119,11 @@ export default function Dashboard() {
     queryFn: () => apiGet<Appointment[]>("/appointments"),
     enabled: !!session.data,
   });
+  const remindersQuery = useQuery({
+    queryKey: ["reminders"],
+    queryFn: () => apiGet<ReminderItem[]>("/appointments/reminders"),
+    enabled: !!session.data,
+  });
 
   const toggleStatus = useMutation({
     mutationFn: (appointment: Appointment) =>
@@ -123,6 +132,7 @@ export default function Dashboard() {
       }),
     onSuccess: (updated) => {
       void queryClient.invalidateQueries({ queryKey: ["appointments"] });
+      void queryClient.invalidateQueries({ queryKey: ["reminders"] });
       toast.success(
         `Agendamento de ${updated.nome.split(" ")[0]} marcado como ${
           updated.status === "atendido" ? "atendido" : "pendente"
@@ -136,6 +146,7 @@ export default function Dashboard() {
     mutationFn: (id: string) => apiDelete<void>(`/appointments/${id}`),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["appointments"] });
+      void queryClient.invalidateQueries({ queryKey: ["reminders"] });
       setToDelete(null);
       toast.success("Agendamento excluído.");
     },
@@ -144,10 +155,12 @@ export default function Dashboard() {
 
   const appointments = appointmentsQuery.data ?? [];
   const today = meta.data?.today;
+  const tomorrow = meta.data?.tomorrow;
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return appointments.filter((appointment) => {
+      if (dateFilter && appointment.data !== dateFilter) return false;
       if (filter === "instalacao" && appointment.servico !== "Instalação") return false;
       if (filter === "manutencao" && appointment.servico !== "Manutenção") return false;
       if (filter === "pendente" && appointment.status !== "pendente") return false;
@@ -157,7 +170,7 @@ export default function Dashboard() {
         (field) => field.toLowerCase().includes(q),
       );
     });
-  }, [appointments, filter, search]);
+  }, [appointments, filter, search, dateFilter]);
 
   if (session.isError) return <Navigate to="/login" replace />;
 
@@ -258,7 +271,109 @@ export default function Dashboard() {
           />
         </section>
 
-        {/* Filters */}
+        {/* Eve-of-visit WhatsApp reminders (permanent one-click send) */}
+        {remindersQuery.data && remindersQuery.data.length > 0 ? (
+          <section data-testid="reminders-section" className="frost rounded-2xl p-6">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="flex items-center gap-2 font-heading text-lg font-bold text-white">
+                  <Bell className="h-4 w-4 text-cyan-400" /> Lembretes para amanhã
+                </h2>
+                <p className="mt-1 text-xs leading-relaxed text-slate-400">
+                  Visitas de {tomorrow ? formatDateBR(tomorrow) : "amanhã"}. Com o WhatsApp
+                  automático ativo, o lembrete sai sozinho na véspera; o envio manual por
+                  aqui permanece sempre disponível.
+                </p>
+              </div>
+              <Badge className="border border-cyan-500/30 bg-[#0E3A52] text-[#7DD3FC]">
+                {remindersQuery.data.length} pendente(s)
+              </Badge>
+            </div>
+            <ul className="mt-4 space-y-3">
+              {remindersQuery.data.map((reminder) => (
+                <li
+                  key={reminder.id}
+                  data-testid={`reminder-item-${reminder.id}`}
+                  className="flex flex-col gap-3 rounded-lg border border-border/60 bg-card/50 p-4 sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-white">{reminder.nome}</p>
+                    <p className="truncate text-xs text-slate-400">
+                      {reminder.servico} · {reminder.periodo ?? "Período flexível"}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    {reminder.reminder_sent ? (
+                      <Badge className="border border-emerald-500/30 bg-[#064E3B] text-[#6EE7B7]">
+                        Lembrete enviado
+                      </Badge>
+                    ) : null}
+                    <a
+                      href={reminder.whatsapp_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      data-testid={`reminder-whatsapp-${reminder.id}`}
+                      aria-label={`Enviar lembrete para ${reminder.nome} no WhatsApp`}
+                      className={
+                        buttonVariants({ variant: "outline", size: "sm" }) +
+                        " border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/10 hover:text-emerald-200"
+                      }
+                    >
+                      <MessageCircle className="mr-1.5 h-3.5 w-3.5" /> Enviar lembrete
+                    </a>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
+
+        {/* Date filter — day view */}
+        <section
+          className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+          data-testid="dashboard-date-filter"
+        >
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              variant={today && dateFilter === today ? "default" : "outline"}
+              size="sm"
+              data-testid="dashboard-filter-hoje-btn"
+              disabled={!today}
+              onClick={() => today && setDateFilter(today)}
+            >
+              Hoje
+            </Button>
+            <Button
+              variant={tomorrow && dateFilter === tomorrow ? "default" : "outline"}
+              size="sm"
+              data-testid="dashboard-filter-amanha-btn"
+              disabled={!tomorrow}
+              onClick={() => tomorrow && setDateFilter(tomorrow)}
+            >
+              Amanhã
+            </Button>
+            {dateFilter ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                data-testid="dashboard-filter-clear-btn"
+                onClick={() => setDateFilter("")}
+              >
+                Limpar filtro
+              </Button>
+            ) : null}
+          </div>
+          <Input
+            type="date"
+            value={dateFilter}
+            onChange={(e) => setDateFilter(e.target.value)}
+            data-testid="dashboard-date-filter-input"
+            aria-label="Filtrar agendamentos por data"
+            className="sm:w-44 [color-scheme:dark]"
+          />
+        </section>
+
+        {/* Status/serviço filters + search */}
         <section className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <Tabs value={filter} onValueChange={(value) => setFilter(value as FilterValue)}>
             <TabsList data-testid="dashboard-filter-tabs">
@@ -301,105 +416,114 @@ export default function Dashboard() {
             <Calendar className="h-8 w-8 text-slate-500" />
             <p className="font-medium text-slate-300">Nenhum agendamento encontrado</p>
             <p className="text-sm text-slate-500">
-              {search.trim() || filter !== "todos"
-                ? "Ajuste a busca ou os filtros para ver mais resultados."
+              {search.trim() || filter !== "todos" || dateFilter
+                ? "Ajuste a busca, os filtros ou a data para ver mais resultados."
                 : "Assim que os clientes agendarem pelo site, os pedidos aparecem aqui."}
             </p>
           </div>
         ) : (
-          <div className="frost overflow-hidden rounded-2xl">
-            <Table data-testid="dashboard-appointments-table">
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>Contato</TableHead>
-                  <TableHead>Serviço</TableHead>
-                  <TableHead>Data</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.map((appointment) => (
-                  <TableRow key={appointment.id} data-testid={`appointment-row-${appointment.id}`}>
-                    <TableCell className="max-w-56">
-                      <p className="font-medium text-white">{appointment.nome}</p>
-                      <p className="truncate text-xs text-slate-400">{appointment.endereco}</p>
-                      <p className="font-mono text-xs text-slate-500">
-                        {maskCPF(appointment.cpf)}
-                      </p>
-                    </TableCell>
-                    <TableCell>
-                      <p className="text-sm text-slate-200">
-                        {maskPhone(appointment.numero)}
-                      </p>
-                      <p className="truncate text-xs text-slate-400">{appointment.email}</p>
-                    </TableCell>
-                    <TableCell>
-                      <p className="text-sm text-slate-200">{appointment.servico}</p>
-                      {appointment.periodo ? (
-                        <p className="text-xs text-slate-400">{appointment.periodo}</p>
-                      ) : null}
-                    </TableCell>
-                    <TableCell>
-                      <p className="text-sm text-slate-200">{formatDateBR(appointment.data)}</p>
-                    </TableCell>
-                    <TableCell>
-                      <StatusBadge status={appointment.status} />
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          data-testid={`btn-toggle-status-${appointment.id}`}
-                          aria-label={
-                            appointment.status === "pendente"
-                              ? `Marcar agendamento de ${appointment.nome} como atendido`
-                              : `Reabrir agendamento de ${appointment.nome}`
-                          }
-                          disabled={toggleStatus.isPending}
-                          onClick={() => toggleStatus.mutate(appointment)}
-                        >
-                          {appointment.status === "pendente" ? (
-                            <CheckCircle2 className="h-4 w-4 text-emerald-400" />
-                          ) : (
-                            <Clock className="h-4 w-4 text-amber-400" />
-                          )}
-                          <span className="ml-1.5 hidden xl:inline">
-                            {appointment.status === "pendente" ? "Marcar atendido" : "Reabrir"}
-                          </span>
-                        </Button>
-                        <a
-                          href={`https://wa.me/55${onlyDigits(appointment.numero)}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          data-testid={`appointment-whatsapp-${appointment.id}`}
-                          aria-label={`Falar com ${appointment.nome} no WhatsApp`}
-                          className={
-                            buttonVariants({ variant: "ghost", size: "icon-sm" }) +
-                            " text-emerald-400 hover:text-emerald-300"
-                          }
-                        >
-                          <MessageCircle className="h-4 w-4" />
-                        </a>
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          data-testid={`btn-delete-appointment-${appointment.id}`}
-                          aria-label={`Excluir agendamento de ${appointment.nome}`}
-                          className="text-red-400 hover:text-red-300"
-                          onClick={() => setToDelete(appointment)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
+          <>
+            {dateFilter ? (
+              <p className="text-sm text-slate-400" data-testid="date-filter-summary">
+                Exibindo agendamentos de{" "}
+                <span className="font-medium text-white">{formatDateBR(dateFilter)}</span> (
+                {filtered.length})
+              </p>
+            ) : null}
+            <div className="frost overflow-hidden rounded-2xl">
+              <Table data-testid="dashboard-appointments-table">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Cliente</TableHead>
+                    <TableHead>Contato</TableHead>
+                    <TableHead>Serviço</TableHead>
+                    <TableHead>Data</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+                </TableHeader>
+                <TableBody>
+                  {filtered.map((appointment) => (
+                    <TableRow key={appointment.id} data-testid={`appointment-row-${appointment.id}`}>
+                      <TableCell className="max-w-56">
+                        <p className="font-medium text-white">{appointment.nome}</p>
+                        <p className="truncate text-xs text-slate-400">{appointment.endereco}</p>
+                        <p className="font-mono text-xs text-slate-500">
+                          {maskCPF(appointment.cpf)}
+                        </p>
+                      </TableCell>
+                      <TableCell>
+                        <p className="text-sm text-slate-200">
+                          {maskPhone(appointment.numero)}
+                        </p>
+                        <p className="truncate text-xs text-slate-400">{appointment.email}</p>
+                      </TableCell>
+                      <TableCell>
+                        <p className="text-sm text-slate-200">{appointment.servico}</p>
+                        {appointment.periodo ? (
+                          <p className="text-xs text-slate-400">{appointment.periodo}</p>
+                        ) : null}
+                      </TableCell>
+                      <TableCell>
+                        <p className="text-sm text-slate-200">{formatDateBR(appointment.data)}</p>
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge status={appointment.status} />
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            data-testid={`btn-toggle-status-${appointment.id}`}
+                            aria-label={
+                              appointment.status === "pendente"
+                                ? `Marcar agendamento de ${appointment.nome} como atendido`
+                                : `Reabrir agendamento de ${appointment.nome}`
+                            }
+                            disabled={toggleStatus.isPending}
+                            onClick={() => toggleStatus.mutate(appointment)}
+                          >
+                            {appointment.status === "pendente" ? (
+                              <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                            ) : (
+                              <Clock className="h-4 w-4 text-amber-400" />
+                            )}
+                            <span className="ml-1.5 hidden xl:inline">
+                              {appointment.status === "pendente" ? "Marcar atendido" : "Reabrir"}
+                            </span>
+                          </Button>
+                          <a
+                            href={`https://wa.me/55${onlyDigits(appointment.numero)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            data-testid={`appointment-whatsapp-${appointment.id}`}
+                            aria-label={`Falar com ${appointment.nome} no WhatsApp`}
+                            className={
+                              buttonVariants({ variant: "ghost", size: "icon-sm" }) +
+                              " text-emerald-400 hover:text-emerald-300"
+                            }
+                          >
+                            <MessageCircle className="h-4 w-4" />
+                          </a>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            data-testid={`btn-delete-appointment-${appointment.id}`}
+                            aria-label={`Excluir agendamento de ${appointment.nome}`}
+                            className="text-red-400 hover:text-red-300"
+                            onClick={() => setToDelete(appointment)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </>
         )}
       </main>
 

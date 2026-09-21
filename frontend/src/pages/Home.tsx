@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { motion } from "motion/react";
 import {
   BadgeCheck,
@@ -18,13 +19,16 @@ import SiteHeader from "@/components/SiteHeader";
 import BookingForm from "@/components/BookingForm";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
+import { useDocumentTitle } from "@/lib/useDocumentTitle";
 
 const WHATSAPP_URL = "https://wa.me/5511999998888";
 const PHONE_DISPLAY = "(11) 99999-8888";
+const PHONE_TEL = "+5511999998888";
 const EMAIL_DISPLAY = "contato@jsclimatizacao.com.br";
 
+// Width/quality params keep the delivered bytes small (compression handled by the CDN).
 const HERO_IMAGE =
-  "https://images.unsplash.com/photo-1761330440311-16e160cad236?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzZ8MHwxfHNlYXJjaHwyfHxtb2Rlcm4lMjBjbGVhbiUyMGxpdmluZyUyMHJvb20lMjBhaXIlMjBjb25kaXRpb25pbmd8ZW58MHx8fDE3ODk5OTIyMzl8MA&ixlib=rb-4.1.0&q=85";
+  "https://images.unsplash.com/photo-1761330440311-16e160cad236?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzZ8MHwxfHNlYXJjaHwyfHxtb2Rlcm4lMjBjbGVhbiUyMGxpdmluZyUyMHJvb20lMjBhaXIlMjBjb25kaXRpb25pbmd8ZW58MHx8fDE3ODk5OTIyMzl8MA&ixlib=rb-4.1.0&q=72&w=900&auto=format";
 
 const SERVICES = [
   {
@@ -34,7 +38,7 @@ const SERVICES = [
       "Instalação completa padrão de fábrica para modelos Split Hi-Wall, Inverter, Cassete e Piso Teto — tubulação de cobre, teste de estanqueidade em nitrogênio e vácuo absoluto.",
     badge: "Mais Solicitado",
     image:
-      "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2NDN8MHwxfHNlYXJjaHwxfHxlbGVjdHJpY2lhbiUyMHJlcGFpciUyMGNvb2xpbmd8ZW58MHx8fDE3ODk5OTIyMzR8MA&ixlib=rb-4.1.0&q=85",
+      "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2NDN8MHwxfHNlYXJjaHwxfHxlbGVjdHJpY2lhbiUyMHJlcGFpciUyMGNvb2xpbmd8ZW58MHx8fDE3ODk5OTIyMzR8MA&ixlib=rb-4.1.0&q=72&w=760&auto=format",
     highlights: ["Garantia estendida", "Infraestrutura limpa", "Cálculo térmico exato"],
   },
   {
@@ -44,7 +48,7 @@ const SERVICES = [
       "Manutenção preventiva e corretiva com higienização química bactericida (norma PMOC), recarga de fluido refrigerante e desobstrução de dreno para eficiência energética máxima.",
     badge: "Essencial para Saúde",
     image:
-      "https://images.pexels.com/photos/5463581/pexels-photo-5463581.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "https://images.pexels.com/photos/5463581/pexels-photo-5463581.jpeg?auto=compress&cs=tinysrgb&dpr=1&h=520&w=760",
     highlights: [
       "Elimina 99,9% dos ácaros e fungos",
       "Reduz até 30% na conta de luz",
@@ -72,6 +76,11 @@ const STEPS = [
 ];
 
 export default function Home() {
+  useDocumentTitle(
+    "JS Climatização | Instalação e Manutenção de Ar-Condicionado",
+    "JS Climatização — instalação e manutenção de ar-condicionado com agendamento online. Agende sua visita técnica em minutos.",
+  );
+
   return (
     <div className="relative min-h-svh bg-background">
       <div aria-hidden="true" className="subtle-grid pointer-events-none fixed inset-0 opacity-50" />
@@ -145,7 +154,10 @@ export default function Home() {
                 <div className="frost overflow-hidden rounded-2xl">
                   <img
                     src={HERO_IMAGE}
-                    alt="Sala contemporânea com ar-condicionado split"
+                    alt="Sala contemporânea com ar-condicionado split instalado pela JS Climatização"
+                    width={900}
+                    height={600}
+                    decoding="async"
                     className="h-72 w-full object-cover sm:h-96"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#0B132B]/90 via-transparent to-transparent" />
@@ -179,8 +191,11 @@ export default function Home() {
                   <div className="relative h-48 overflow-hidden">
                     <img
                       src={service.image}
-                      alt={service.title}
+                      alt={`Serviço de ${service.title} da JS Climatização`}
                       loading="lazy"
+                      decoding="async"
+                      width={760}
+                      height={520}
                       className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 motion-reduce:transition-none"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#1C2541] via-[#0B132B]/40 to-transparent" />
@@ -266,14 +281,28 @@ export default function Home() {
                 </ul>
                 <div className="mt-8 space-y-3 text-sm text-slate-300">
                   <p className="flex items-center gap-3">
-                    <Phone className="h-4 w-4 text-cyan-400" /> {PHONE_DISPLAY}
+                    <Phone className="h-4 w-4 shrink-0 text-cyan-400" />
+                    <a
+                      href={`tel:${PHONE_TEL}`}
+                      data-testid="contact-phone-link"
+                      className="transition-colors hover:text-white"
+                    >
+                      {PHONE_DISPLAY}
+                    </a>
                   </p>
                   <p className="flex items-center gap-3">
-                    <Mail className="h-4 w-4 text-cyan-400" /> {EMAIL_DISPLAY}
+                    <Mail className="h-4 w-4 shrink-0 text-cyan-400" />
+                    <a
+                      href={`mailto:${EMAIL_DISPLAY}`}
+                      data-testid="contact-email-link"
+                      className="break-all transition-colors hover:text-white"
+                    >
+                      {EMAIL_DISPLAY}
+                    </a>
                   </p>
                   <p className="flex items-center gap-3">
-                    <MapPin className="h-4 w-4 text-cyan-400" /> Av. das Nações, 1250 — São
-                    Paulo/SP
+                    <MapPin className="h-4 w-4 shrink-0 text-cyan-400" /> Av. das Nações, 1250 —
+                    São Paulo/SP
                   </p>
                 </div>
                 <a
@@ -302,14 +331,18 @@ export default function Home() {
           <div className="mx-auto max-w-6xl px-4 py-14 sm:px-6">
             <div className="grid grid-cols-1 gap-10 md:grid-cols-4">
               <div className="md:col-span-2">
-                <div className="flex items-center gap-2">
+                <Link
+                  to="/"
+                  className="flex items-center gap-2"
+                  data-testid="footer-brand-link"
+                >
                   <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/15 text-primary">
                     <Snowflake className="h-5 w-5" />
                   </span>
                   <span className="font-heading text-lg font-bold text-white">
                     JS <span className="text-cyan-400">Climatização</span>
                   </span>
-                </div>
+                </Link>
                 <p className="mt-4 max-w-sm text-sm leading-relaxed text-slate-400">
                   Conforto térmico, ar puro e precisão técnica para sua casa ou empresa.
                   Instalação e manutenção de ar-condicionado com agendamento online.
@@ -321,9 +354,33 @@ export default function Home() {
                   Serviços
                 </h3>
                 <ul className="mt-4 space-y-2 text-sm text-slate-400">
-                  <li>Instalação de Ar-Condicionado</li>
-                  <li>Manutenção & Higienização</li>
-                  <li>Atendimento residencial e comercial</li>
+                  <li>
+                    <a
+                      href="/#servicos"
+                      data-testid="footer-link-instalacao"
+                      className="transition-colors hover:text-cyan-300"
+                    >
+                      Instalação de Ar-Condicionado
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href="/#servicos"
+                      data-testid="footer-link-manutencao"
+                      className="transition-colors hover:text-cyan-300"
+                    >
+                      Manutenção &amp; Higienização
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href="/#agendar"
+                      data-testid="footer-link-agendar"
+                      className="transition-colors hover:text-cyan-300"
+                    >
+                      Agendar visita técnica
+                    </a>
+                  </li>
                 </ul>
               </div>
 
@@ -332,17 +389,33 @@ export default function Home() {
                   Contato
                 </h3>
                 <ul className="mt-4 space-y-2 text-sm text-slate-400">
-                  <li>{PHONE_DISPLAY}</li>
-                  <li>{EMAIL_DISPLAY}</li>
-                  <li>Seg a Sáb, 8h às 18h</li>
                   <li>
                     <a
-                      href="/login"
+                      href={`tel:${PHONE_TEL}`}
+                      data-testid="footer-phone-link"
+                      className="transition-colors hover:text-cyan-300"
+                    >
+                      {PHONE_DISPLAY}
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href={`mailto:${EMAIL_DISPLAY}`}
+                      data-testid="footer-email-link"
+                      className="break-all transition-colors hover:text-cyan-300"
+                    >
+                      {EMAIL_DISPLAY}
+                    </a>
+                  </li>
+                  <li>Seg a Sáb, 8h às 18h</li>
+                  <li>
+                    <Link
+                      to="/login"
                       data-testid="footer-link-login"
                       className="text-cyan-400 transition-colors hover:text-cyan-300"
                     >
                       Área do Dono
-                    </a>
+                    </Link>
                   </li>
                 </ul>
               </div>

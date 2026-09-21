@@ -93,3 +93,17 @@ class AppointmentStatusUpdate(BaseModel):
         if v not in STATUS:
             raise ValueError("Status deve ser 'pendente' ou 'atendido'")
         return v
+
+
+class ReminderItem(BaseModel):
+    """One row of the dashboard's eve-of-visit reminder list (GET /appointments/reminders)."""
+
+    id: str
+    nome: str
+    servico: str
+    data: str
+    periodo: str | None = None
+    numero: str
+    whatsapp_url: str
+    message: str
+    reminder_sent: bool

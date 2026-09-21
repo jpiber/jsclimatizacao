@@ -5,11 +5,11 @@ from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 import os
 import logging
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from pydantic import BaseModel, Field
 from typing import List
 import uuid
-from datetime import datetime
 
 
 ROOT_DIR = Path(__file__).parent
@@ -18,6 +18,7 @@ load_dotenv(ROOT_DIR / '.env')
 # MongoDB connection
 from lib.db import client, db, ensure_indexes
 from lib.dates import today_iso
+from lib.whatsapp import reminder_loop
 from routers.auth import router as auth_router
 from routers.appointments import router as appointments_router
 
@@ -26,7 +27,9 @@ from routers.appointments import router as appointments_router
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     app.state.index_task = asyncio.create_task(ensure_indexes())  # background: a big index build must not block boot
+    app.state.reminder_task = asyncio.create_task(reminder_loop())  # background: WhatsApp reminders on the eve of each visit
     yield
+    app.state.reminder_task.cancel()
     client.close()
 
 
@@ -63,10 +66,12 @@ async def get_status_checks():
     status_checks = await db.status_checks.find().to_list(1000)
     return [StatusCheck(**status_check) for status_check in status_checks]
 
-# Server-anchored "today" (APP_TZ from backend/.env) — the browser never does its own date math.
+# Server-anchored "today"/"tomorrow" (APP_TZ from backend/.env) — the browser never does its own date math.
 @api_router.get("/meta")
 async def get_meta():
-    return {"today": today_iso(), "empresa": "JS Climatização"}
+    today = today_iso()
+    tomorrow = (date.fromisoformat(today) + timedelta(days=1)).isoformat()
+    return {"today": today, "tomorrow": tomorrow, "empresa": "JS Climatização"}
 
 # Feature routers — one module per resource, mounted on the /api router above the final include.
 api_router.include_router(auth_router)
