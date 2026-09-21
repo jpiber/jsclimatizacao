@@ -13,7 +13,7 @@ import re
 from datetime import datetime, timezone
 from html import escape
 from html.parser import HTMLParser
-from urllib.parse import urlparse
+from urllib.parse import quote, urlparse
 
 import httpx
 
@@ -137,6 +137,27 @@ async def send_email(*, to: str, subject: str, html: str) -> str | None:
         return None
 
 
+def _format_phone_br(numero: str) -> str:
+    """Stored digits -> '(11) 91234-5678' for display inside the email."""
+    d = re.sub(r"\D", "", numero)
+    if len(d) == 11:
+        return f"({d[0:2]}) {d[2:7]}-{d[7:]}"
+    if len(d) == 10:
+        return f"({d[0:2]}) {d[2:6]}-{d[6:]}"
+    return numero
+
+
+def _whatsapp_link(numero: str, nome: str, servico: str, data: str) -> str:
+    """Click-to-chat link straight to the client's WhatsApp, with the greeting
+    pre-filled from a fixed server-side template."""
+    digits = re.sub(r"\D", "", numero)
+    message = (
+        f"Olá, {nome.split(' ')[0]}! Aqui é da JS Climatização. Recebemos seu agendamento "
+        f"de {servico} para {format_date_br(data)} e queremos confirmar os detalhes da visita."
+    )
+    return "https://wa.me/55" + digits + "?text=" + quote(message)
+
+
 def _appointment_alert_html(
     nome: str,
     servico: str,
@@ -146,13 +167,16 @@ def _appointment_alert_html(
     numero: str,
     email: str,
 ) -> str:
-    """Fixed server-side template for the owner's new-booking alert (no links)."""
+    """Fixed server-side template for the owner's new-booking alert. The phone row
+    links straight to the client's WhatsApp (anchor text is the number itself)."""
     periodo_html = (
         f'<tr><td style="padding:4px 12px 4px 0;color:#64748b">Período</td>'
         f'<td style="padding:4px 0"><strong>{escape(periodo)}</strong></td></tr>'
         if periodo
         else ""
     )
+    wa_url = _whatsapp_link(numero, nome, servico, data)
+    phone_display = _format_phone_br(numero)
     return f"""<table role="presentation" width="100%" cellpadding="0" cellspacing="0">
   <tr><td style="padding:24px;font-family:Arial,sans-serif;background:#0B132B;color:#F8FAFC">
     <p style="margin:0 0 4px;font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#38BDF8">Novo agendamento recebido</p>
@@ -163,10 +187,13 @@ def _appointment_alert_html(
       <tr><td style="padding:4px 12px 4px 0;color:#64748b">Data preferida</td><td style="padding:4px 0"><strong>{escape(format_date_br(data))}</strong></td></tr>
       {periodo_html}
       <tr><td style="padding:4px 12px 4px 0;color:#64748b">Endereço</td><td style="padding:4px 0">{escape(endereco)}</td></tr>
-      <tr><td style="padding:4px 12px 4px 0;color:#64748b">Telefone</td><td style="padding:4px 0">{escape(numero)}</td></tr>
-      <tr><td style="padding:4px 12px 4px 0;color:#64748b">E-mail</td><td style="padding:4px 0">{escape(email)}</td></tr>
+      <tr><td style="padding:4px 12px 4px 0;color:#64748b">WhatsApp</td><td style="padding:4px 0"><a href="{escape(wa_url, quote=True)}" style="color:#38BDF8;font-weight:bold;text-decoration:underline">{escape(phone_display)}</a></td></tr>
+      <tr><td style="padding:4px 12px 4px 0;color:#64748b">E-mail</td><td style="padding:4px 0"><a href="mailto:{escape(email, quote=True)}" style="color:#38BDF8;text-decoration:underline">{escape(email)}</a></td></tr>
     </table>
-    <p style="margin:20px 0 0;font-size:13px;color:#94A3B8">Confirme a visita com o cliente pelo WhatsApp e marque o agendamento como atendido no painel.</p>
+    <p style="margin:20px 0 8px">
+      <a href="{escape(wa_url, quote=True)}" style="display:inline-block;padding:12px 20px;border-radius:8px;background:#00B4D8;color:#041525;font-weight:bold;text-decoration:none">Falar com o cliente no WhatsApp</a>
+    </p>
+    <p style="margin:12px 0 0;font-size:13px;color:#94A3B8">Toque no botão para abrir a conversa com a mensagem de confirmação já escrita, e marque o agendamento como atendido no painel.</p>
     <p style="margin:16px 0 0;font-size:12px;color:#64748b">Enviado por {escape(EMAIL_FROM_NAME)}. Nunca pedimos senha ou dados de cartão por e-mail.</p>
   </td></tr>
 </table>"""

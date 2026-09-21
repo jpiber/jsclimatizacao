@@ -31,7 +31,11 @@ created_at desc, data asc.
 - **Owner email alert** — every new booking fires a background email (never blocks/fails the
   booking; capped at 10/h) to OWNER_EMAIL via the Emergent managed Resend proxy
   (`backend/lib/emailer.py`: fixed template, escaped fields, `_assert_safe_email` gate on
-  every send, no links). Config: `EMERGENT_EMAIL_KEY`, `EMAIL_FROM_NAME=JS Climatização`.
+  every send). The email shows the phone as **(11) 91234-5678 linked straight to the
+  client's WhatsApp** (`https://wa.me/55<digits>?text=<greeting>`) plus a "Falar com o
+  cliente no WhatsApp" button — both carry a pre-filled confirmation message built from a
+  fixed server-side template; the client e-mail row is a `mailto:` link.
+  Config: `EMERGENT_EMAIL_KEY`, `EMAIL_FROM_NAME=JS Climatização`.
 - **WhatsApp reminders** (`backend/lib/whatsapp.py`) — background loop (15 min) sends a
   fixed PT-BR template to pendente clients whose `data == tomorrow_iso()` via Twilio
   WhatsApp, marking `reminder_sent` (max 3 attempts). INACTIVE until the user pastes
