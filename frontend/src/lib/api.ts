@@ -3,6 +3,7 @@
 const BASE = import.meta.env.VITE_API_BASE_URL
   ? `${String(import.meta.env.VITE_API_BASE_URL).replace(/\/$/, "")}/api`
   : "/api";
+export const AUTH_TOKEN_KEY = "js_session_token";
 
 // Fields are declared, not constructor parameter properties: tsconfig sets
 // erasableSyntaxOnly, which rejects `constructor(readonly status: number)`.
@@ -24,10 +25,14 @@ async function request<T>(method: string, path: string, body?: JsonBody): Promis
   // Auth rides the httpOnly session cookie automatically — never add auth headers here.
   // `credentials: "include"` matters only when the backend is on another origin
   // (frontend na Vercel + backend no Railway/Render); same-origin já envia o cookie.
+  const token = typeof window !== "undefined" ? window.localStorage.getItem(AUTH_TOKEN_KEY) : null;
+  const headers = new Headers();
+  if (body !== undefined) headers.set("Content-Type", "application/json");
+  if (token) headers.set("Authorization", `Bearer ${token}`);
   const res = await fetch(`${BASE}${path}`, {
     method,
     credentials: "include",
-    headers: body === undefined ? undefined : { "Content-Type": "application/json" },
+    headers,
     body: body === undefined ? undefined : JSON.stringify(body),
   });
 

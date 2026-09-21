@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 
 import { ApiError, apiPost } from "@/lib/api";
-import { beginSession } from "@/lib/session";
+import { beginSession, saveSessionToken } from "@/lib/session";
 import type { LoginRequest, SessionUser } from "@/lib/types";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,7 +52,8 @@ export default function Login() {
 
   const login = useMutation({
     mutationFn: (body: LoginRequest) => apiPost<SessionUser>("/auth/login", body),
-    onSuccess: async () => {
+    onSuccess: async (session) => {
+      saveSessionToken(session.access_token);
       await beginSession();
       navigate("/dashboard", { replace: true });
     },

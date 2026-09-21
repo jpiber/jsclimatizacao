@@ -45,6 +45,7 @@ export interface AppointmentCreate {
 // Mirror of backend/routers/auth.py::SessionUser
 export interface SessionUser {
   email: string;
+  access_token?: string | null;
 }
 
 // Body of POST /auth/login — mirrors LoginRequest

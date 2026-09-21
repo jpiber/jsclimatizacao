@@ -25,6 +25,7 @@ class LoginRequest(BaseModel):
 
 class SessionUser(BaseModel):
     email: str
+    access_token: str | None = None
 
 
 def _secret() -> str:
@@ -33,6 +34,10 @@ def _secret() -> str:
 
 def get_current_user(request: Request) -> SessionUser:
     token = request.cookies.get(COOKIE_NAME)
+    if not token:
+        authorization = request.headers.get("authorization", "")
+        if authorization.lower().startswith("bearer "):
+            token = authorization[7:].strip()
     if not token:
         raise HTTPException(status_code=401, detail="Não autenticado")
     try:
@@ -64,7 +69,7 @@ async def login(input: LoginRequest, response: Response):
         secure=_cookie_secure(),
         max_age=TOKEN_TTL_DAYS * 24 * 3600,
     )
-    return SessionUser(email=owner_email)
+    return SessionUser(email=owner_email, access_token=token)
 
 
 @router.post("/logout", status_code=204)

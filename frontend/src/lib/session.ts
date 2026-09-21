@@ -1,10 +1,14 @@
-import { apiGet, apiPost } from "@/lib/api";
+import { apiGet, apiPost, AUTH_TOKEN_KEY } from "@/lib/api";
 import { queryClient } from "@/lib/queryClient";
 import type { SessionUser } from "@/lib/types";
 
 // The session rides an httpOnly cookie set by /api/auth/login; the frontend only
 // ever asks "who am I" and invalidates this query at session boundaries.
 export const SESSION_QUERY_KEY = ["session"] as const;
+
+export function saveSessionToken(token: string | null | undefined) {
+  if (token) window.localStorage.setItem(AUTH_TOKEN_KEY, token);
+}
 
 export const fetchSessionUser = () => apiGet<SessionUser>("/auth/me");
 
@@ -19,6 +23,7 @@ export async function endSession() {
   try {
     await apiPost("/auth/logout");
   } finally {
+    window.localStorage.removeItem(AUTH_TOKEN_KEY);
     queryClient.clear();
   }
 }
