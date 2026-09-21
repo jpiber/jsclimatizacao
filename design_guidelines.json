@@ -1,0 +1,364 @@
+{
+  "brand": {
+    "name": "JS Climatização",
+    "tagline": "Conforto térmico, ar puro e precisão técnica para sua casa ou empresa",
+    "tone": "Profissional, ágil, técnico de alta confiança e acolhedor (PT-BR)",
+    "services_offered": [
+      {
+        "id": "instalacao",
+        "title": "Instalação de Ar-Condicionado",
+        "description": "Instalação completa padrão de fábrica para modelos Split Hi-Wall, Inverter, Cassete e Piso Teto com tubulação de cobre, teste de estanqueidade em nitrogênio e vácuo absoluto.",
+        "badge": "Mais Solicitado",
+        "highlights": ["Garantia estendida", "Infraestrutura limpa", "Cálculo térmico exato"]
+      },
+      {
+        "id": "manutencao",
+        "title": "Manutenção & Higienização",
+        "description": "Manutenção preventiva e corretiva com higienização química bactericida (norma PMOC), recarga de fluido refrigerante e desobstrução de dreno para eficiência energética máxima.",
+        "badge": "Essencial para Saúde",
+        "highlights": ["Eliminação de 99,9% dos ácaros e fungos", "Redução de até 30% na conta de luz", "Diagnóstico elétrico e mecânico"]
+      }
+    ]
+  },
+  "entry_surfaces": {
+    "/": "split hero — brand value proposition + fast-booking CTA left with trust badges, seeded live ambient split system visual and quick service selector right",
+    "/login": "branded split login — technical assurance & owner portal positioning panel left, secure credentials login form right",
+    "/dashboard": "dense management console — statistics summary bar top, filterable booking cards and data table with status toggle and delete controls center-bottom"
+  },
+  "colors": {
+    "surfaces": [
+      {
+        "name": "page",
+        "kind": "solid",
+        "bg": "#0B132B",
+        "on_bg": "#F8FAFC",
+        "on_bg_muted": "#94A3B8",
+        "roles": {
+          "link": "#38BDF8",
+          "error": "#F87171",
+          "success": "#34D399",
+          "warning": "#FBBF24"
+        }
+      },
+      {
+        "name": "panel",
+        "kind": "solid",
+        "bg": "#1C2541",
+        "on_bg": "#F8FAFC",
+        "on_bg_muted": "#94A3B8",
+        "roles": {
+          "link": "#38BDF8",
+          "error": "#F87171",
+          "success": "#34D399",
+          "warning": "#FBBF24",
+          "border": "#334155"
+        }
+      },
+      {
+        "name": "panel_elevated",
+        "kind": "solid",
+        "bg": "#233156",
+        "on_bg": "#FFFFFF",
+        "on_bg_muted": "#CBD5E1",
+        "roles": {
+          "link": "#38BDF8",
+          "error": "#F87171",
+          "success": "#4ADE80"
+        }
+      },
+      {
+        "name": "inverse",
+        "kind": "solid",
+        "bg": "#F8FAFC",
+        "on_bg": "#0B132B",
+        "on_bg_muted": "#475569",
+        "roles": {
+          "link": "#0284C7",
+          "error": "#DC2626",
+          "success": "#16A34A"
+        }
+      },
+      {
+        "name": "hero",
+        "kind": "image",
+        "contrast_against": "#070E20",
+        "guarantee": "scrim: linear-gradient(135deg, rgba(11,19,43,0.95) 0%, rgba(11,19,43,0.82) 60%, rgba(11,19,43,0.65) 100%)",
+        "on_bg": "#FFFFFF",
+        "on_bg_muted": "#CBD5E1",
+        "roles": {
+          "link": "#38BDF8",
+          "error": "#FCA5A5",
+          "success": "#86EFAC"
+        }
+      },
+      {
+        "name": "glass_header",
+        "kind": "glass",
+        "contrast_against": "#0B132B",
+        "guarantee": "backdrop-blur-xl bg-[#0B132B]/80 border-b border-cyan-500/15 shadow-sm shadow-cyan-950/40",
+        "on_bg": "#F8FAFC",
+        "on_bg_muted": "#94A3B8",
+        "roles": {
+          "link": "#38BDF8"
+        }
+      },
+      {
+        "name": "badge_cyan",
+        "kind": "solid",
+        "bg": "#0E3A52",
+        "on_bg": "#38BDF8",
+        "on_bg_muted": "#7DD3FC"
+      },
+      {
+        "name": "badge_success",
+        "kind": "solid",
+        "bg": "#064E3B",
+        "on_bg": "#6EE7B7",
+        "on_bg_muted": "#A7F3D0"
+      },
+      {
+        "name": "badge_warning",
+        "kind": "solid",
+        "bg": "#451A03",
+        "on_bg": "#FCD34D",
+        "on_bg_muted": "#FDE68A"
+      }
+    ],
+    "accent": "#00B4D8",
+    "on_accent": "#041525",
+    "secondary_accent": "#0284C7",
+    "on_secondary_accent": "#FFFFFF"
+  },
+  "typography": {
+    "fonts": {
+      "heading": "'Sora Variable', sans-serif",
+      "body": "'DM Sans Variable', sans-serif",
+      "mono": "'JetBrains Mono Variable', monospace"
+    },
+    "font_import": "@import \"@fontsource-variable/sora\";\n@import \"@fontsource-variable/dm-sans\";\n@import \"@fontsource-variable/jetbrains-mono\";",
+    "scale_px": {
+      "display": 56,
+      "h1": 44,
+      "h2": 32,
+      "h3": 22,
+      "body": 16,
+      "caption": 14
+    },
+    "rules": {
+      "headlines": "font-heading font-bold tracking-tight text-white",
+      "labels": "uppercase font-medium text-xs tracking-wider text-cyan-400",
+      "body": "font-body text-base leading-relaxed text-slate-300",
+      "mono_data": "font-mono text-sm tracking-normal"
+    }
+  },
+  "visual_enhancers": {
+    "theme_archetype": "Architectural Climate Precision (Deep Obsidian/Navy #0B132B + Arctic Cyan #00B4D8 + Cool Ice Accents)",
+    "frost_effect": "border border-cyan-500/20 bg-slate-900/60 backdrop-blur-md shadow-[0_8px_32px_rgba(0,180,216,0.08)]",
+    "glow_beam": "radial-gradient(ellipse at 50% 0%, rgba(0, 180, 216, 0.15) 0%, rgba(11, 19, 43, 0) 70%)",
+    "subtle_grid": "bg-[linear-gradient(to_right,#1e293b15_1px,transparent_1px),linear-gradient(to_bottom,#1e293b15_1px,transparent_1px)] bg-[size:32px_32px]"
+  },
+  "grids": {
+    "marketing": {
+      "hero": "grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center",
+      "services": "grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto",
+      "features": "grid grid-cols-1 md:grid-cols-3 gap-6",
+      "booking_split": "grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12",
+      "contact_footer": "grid grid-cols-1 md:grid-cols-4 gap-8"
+    },
+    "dashboard": {
+      "stats_bar": "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4",
+      "filters": "flex flex-col sm:flex-row gap-3 items-center justify-between",
+      "cards_or_table": "w-full overflow-hidden"
+    }
+  },
+  "image_urls": {
+    "hero_ambient": {
+      "url": "https://images.unsplash.com/photo-1761330440311-16e160cad236?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjY2NzZ8MHwxfHNlYXJjaHwyfHxtb2Rlcm4lMjBjbGVhbiUyMGxpdmluZyUyMHJvb20lMjBhaXIlMjBjb25kaXRpb25pbmd8ZW58MHx8fHwxNzg5OTkyMjM5fDA&ixlib=rb-4.1.0&q=85",
+      "description": "Sala contemporânea com ar condicionado split clean e iluminação suave",
+      "usage": "Hero section visual background card & ambient banner"
+    },
+    "technician_work": {
+      "url": "https://images.pexels.com/photos/5463581/pexels-photo-5463581.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "description": "Técnico especializado em manutenção de unidade externa de climatização",
+      "usage": "Services section — Manutenção & Higienização card background/visual"
+    },
+    "installation_tech": {
+      "url": "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDQ2NDN8MHwxfHNlYXJjaHwxfHxlbGVjdHJpY2lhbiUyMHJlcGFpciUyMGNvb2xpbmd8ZW58MHx8fHwxNzg5OTkyMjM0fDA&ixlib=rb-4.1.0&q=85",
+      "description": "Especialista técnico executando conexão e montagem com EPI",
+      "usage": "Services section — Instalação card visual"
+    },
+    "condenser_equipment": {
+      "url": "https://images.unsplash.com/photo-1698479603408-1a66a6d9e80f?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzV8MHwxfHNlYXJjaHwxfHxhaXIlMjBjb25kaXRpb25pbmclMjB0ZWNobmljaWFuJTIwbWFpbnRlbmFuY2V8ZW58MHx8fHwxNzg5OTkyMjI4fDA&ixlib=rb-4.1.0&q=85",
+      "description": "Bateria de condensadores industriais e residenciais de alta potência",
+      "usage": "About/Technology section visual"
+    }
+  },
+  "required_fields_booking_form": {
+    "fields": [
+      {
+        "name": "nome",
+        "label": "Nome Completo",
+        "type": "text",
+        "placeholder": "Ex: João da Silva",
+        "required": true,
+        "test_id": "booking-input-nome"
+      },
+      {
+        "name": "cpf",
+        "label": "CPF",
+        "type": "text",
+        "placeholder": "000.000.000-00",
+        "mask": "cpf",
+        "required": true,
+        "test_id": "booking-input-cpf"
+      },
+      {
+        "name": "email",
+        "label": "E-mail",
+        "type": "email",
+        "placeholder": "joao@email.com",
+        "required": true,
+        "test_id": "booking-input-email"
+      },
+      {
+        "name": "numero",
+        "label": "Número (WhatsApp / Telefone)",
+        "type": "tel",
+        "placeholder": "(11) 99999-9999",
+        "mask": "phone_br",
+        "required": true,
+        "test_id": "booking-input-numero"
+      },
+      {
+        "name": "endereco",
+        "label": "Endereço Completo",
+        "type": "text",
+        "placeholder": "Rua, Nº, Bairro, Cidade - UF",
+        "required": true,
+        "test_id": "booking-input-endereco"
+      },
+      {
+        "name": "servico",
+        "label": "Tipo de Serviço",
+        "type": "select",
+        "options": [
+          {"value": "Instalação", "label": "Instalação de Ar-Condicionado"},
+          {"value": "Manutenção", "label": "Manutenção & Higienização"}
+        ],
+        "required": true,
+        "test_id": "booking-select-servico"
+      },
+      {
+        "name": "data_preferencial",
+        "label": "Data Preferencial",
+        "type": "date",
+        "required": true,
+        "test_id": "booking-input-data"
+      },
+      {
+        "name": "periodo",
+        "label": "Período Preferencial",
+        "type": "select",
+        "options": [
+          {"value": "Manhã (08h às 12h)", "label": "Manhã (08h às 12h)"},
+          {"value": "Tarde (13h às 18h)", "label": "Tarde (13h às 18h)"},
+          {"value": "Comercial Flexível", "label": "Comercial Flexível"}
+        ],
+        "required": false,
+        "test_id": "booking-select-periodo"
+      },
+      {
+        "name": "observacoes",
+        "label": "Observações / Modelo do Aparelho (Opcional)",
+        "type": "textarea",
+        "placeholder": "Ex: Split 12.000 BTUs no 3º andar ou barulho no motor",
+        "required": false,
+        "test_id": "booking-input-observacoes"
+      }
+    ]
+  },
+  "owner_dashboard_spec": {
+    "auth_route": "/login",
+    "dashboard_route": "/dashboard",
+    "features": [
+      {
+        "name": "Stats Cards",
+        "items": [
+          {"id": "total", "label": "Total de Agendamentos", "icon": "Calendar"},
+          {"id": "pendentes", "label": "Agendamentos Pendentes", "icon": "Clock", "color": "text-amber-400"},
+          {"id": "atendidos", "label": "Agendamentos Atendidos", "icon": "CheckCircle2", "color": "text-emerald-400"},
+          {"id": "hoje", "label": "Agendados para Hoje", "icon": "CalendarDays", "color": "text-cyan-400"}
+        ]
+      },
+      {
+        "name": "Status Toggle",
+        "action": "Alternar status entre 'Pendente' e 'Atendido' com feedback de toast imediato e atualização no backend",
+        "test_id_prefix": "btn-toggle-status-"
+      },
+      {
+        "name": "Delete Appointment",
+        "action": "Excluir agendamento com diálogo de confirmação protetivo",
+        "test_id_prefix": "btn-delete-appointment-"
+      },
+      {
+        "name": "Quick Filters & Search",
+        "filters": ["Todos", "Instalação", "Manutenção", "Pendente", "Atendido"],
+        "search_by": "Nome, CPF, Telefone ou Endereço"
+      },
+      {
+        "name": "WhatsApp Direct Action",
+        "action": "Botão de atalho para iniciar conversa no WhatsApp com o cliente informando o status do agendamento (Ex: https://wa.me/55...)"
+      }
+    ]
+  },
+  "motion": {
+    "hero_fade_in": {
+      "initial": { "opacity": 0, "y": 20 },
+      "animate": { "opacity": 1, "y": 0 },
+      "transition": { "duration": 0.5, "ease": "easeOut" }
+    },
+    "card_hover": "transition-all duration-300 hover:-translate-y-1 hover:border-cyan-400/40 hover:shadow-[0_10px_30px_rgba(0,180,216,0.15)]",
+    "interactive_btn": "active:scale-[0.98] transition-transform duration-150"
+  },
+  "accessibility": {
+    "wcag_level": "AA",
+    "contrast_ratio_standard": "4.5:1 for body and normal copy, 3:1 for large headers and control outlines",
+    "reduced_motion": "Respect prefers-reduced-motion using Tailwind motion-reduce:transition-none or Framer Motion reduced motion hooks",
+    "forms": "Every input has explicit associated label with htmlFor and aria-describedby for errors",
+    "screen_readers": "All icon-only buttons (like delete or phone links) contain sr-only text or aria-label attributes"
+  },
+  "testing_attributes": {
+    "header_nav": "nav-header",
+    "nav_home": "nav-link-home",
+    "nav_services": "nav-link-services",
+    "nav_booking": "nav-link-booking",
+    "nav_contact": "nav-link-contact",
+    "nav_login": "nav-link-login",
+    "hero_cta_booking": "hero-cta-agendar",
+    "hero_cta_services": "hero-cta-servicos",
+    "service_card_instalacao": "service-card-instalacao",
+    "service_card_manutencao": "service-card-manutencao",
+    "booking_form": "booking-form-main",
+    "booking_submit_button": "booking-submit-btn",
+    "booking_success_card": "booking-success-message",
+    "login_form": "owner-login-form",
+    "login_email_input": "login-input-email",
+    "login_password_input": "login-input-password",
+    "login_submit_button": "login-submit-btn",
+    "dashboard_container": "owner-dashboard-container",
+    "dashboard_logout_btn": "owner-logout-btn",
+    "dashboard_search_input": "dashboard-search-input",
+    "dashboard_filter_tabs": "dashboard-filter-tabs",
+    "dashboard_table": "dashboard-appointments-table"
+  },
+  "instructions_to_main_agent": [
+    "Follow Portuguese (PT-BR) language consistently for all user-facing copy, notifications, toasts, and form masks.",
+    "Ensure the booking form contains the exact requested fields: 'nome', 'cpf', 'email', 'numero', 'endereço', alongside service type ('Instalação' or 'Manutenção') and date selection.",
+    "Implement input masks or clean formatters for CPF (000.000.000-00) and Brazilian phone numbers ((00) 00000-0000).",
+    "Seed default owner credentials in memory/test_credentials.md and backend/seed.py (e.g., admin@jsclimatizacao.com.br / admin123) with pre-seeded realistic Brazilian appointments.",
+    "Public landing page MUST render gracefully if backend fails: show header, hero, service cards, contact info and offline alert without crashing.",
+    "Never use generic centered layouts or unstyled gray backgrounds. Use the deep navy/obsidian #0B132B background with icy cyan highlights (#00B4D8 / #38BDF8) and frosted glass cards.",
+    "Use sonner for instant toast feedback upon booking submission, status updates, and deletions.",
+    "Provide a quick 'Falar no WhatsApp' direct link on cards or bottom floating button (+55 (11) 99999-8888 placeholder) and clear contact details in the footer."
+  ]
+}
