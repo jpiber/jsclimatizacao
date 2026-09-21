@@ -1,4 +1,4 @@
-"""Emergent managed email (Resend proxy) — owner notifications.
+"""Resend email notifications for new appointments.
 
 The sender address is owned by the platform; the visible sender name comes from
 EMAIL_FROM_NAME (this app's own brand). Recipients and bodies are always
@@ -21,10 +21,12 @@ from lib.dates import format_date_br
 
 logger = logging.getLogger(__name__)
 
-# Emergent managed email proxy. Constant on purpose — survives deployment.
-EMAIL_BASE_URL = "https://integrations.emergentagent.com"
-EMAIL_KEY = os.environ.get("EMERGENT_EMAIL_KEY", "")
+# Resend API. Use onboarding@resend.dev for initial testing, or an address from
+# a domain verified in Resend for production delivery.
+EMAIL_BASE_URL = "https://api.resend.com"
+EMAIL_KEY = os.environ.get("RESEND_API_KEY", "")
 EMAIL_FROM_NAME = os.environ.get("EMAIL_FROM_NAME", "JS Climatização")
+EMAIL_FROM_ADDRESS = os.environ.get("EMAIL_FROM_ADDRESS", "onboarding@resend.dev")
 
 # The booking form is public, so cap owner alerts as a light abuse guard.
 _MAX_ALERTS_PER_HOUR = 10
@@ -113,18 +115,23 @@ def _assert_safe_email(subject: str, html: str) -> None:
 
 
 async def send_email(*, to: str, subject: str, html: str) -> str | None:
-    """Send through the managed proxy. Returns the provider message id, or None on
+    """Send through Resend. Returns the provider message id, or None on
     failure (logged, never raised — background callers must not crash)."""
     _assert_safe_email(subject, html)          # G2-G3 gate — never skip
     if not EMAIL_KEY:
-        logger.error("Email send skipped: EMERGENT_EMAIL_KEY not configured")
+        logger.error("Email send skipped: RESEND_API_KEY not configured")
         return None
-    payload = {"to": [to], "subject": subject, "html": html, "from_name": EMAIL_FROM_NAME}
+    payload = {
+        "from": f"{EMAIL_FROM_NAME} <{EMAIL_FROM_ADDRESS}>",
+        "to": [to],
+        "subject": subject,
+        "html": html,
+    }
     try:
         async with httpx.AsyncClient(timeout=30) as client:
             resp = await client.post(
-                f"{EMAIL_BASE_URL}/api/v1/email/send",
-                headers={"X-Email-Key": EMAIL_KEY},
+                f"{EMAIL_BASE_URL}/emails",
+                headers={"Authorization": f"Bearer {EMAIL_KEY}"},
                 json=payload,
             )
         resp.raise_for_status()

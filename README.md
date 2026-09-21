@@ -71,7 +71,7 @@ está no `.gitignore` e **nunca** deve ser enviado ao repositório.
 | `CORS_ORIGINS`, `APP_URL`, `APP_TZ` | origens permitidas, URL pública e fuso (datas do servidor) |
 | `OWNER_EMAIL`, `OWNER_PASSWORD` | login do painel do dono |
 | `SESSION_SECRET` | assinatura do cookie de sessão (use um valor aleatório e único) |
-| `EMERGENT_EMAIL_KEY`, `EMAIL_FROM_NAME` | envio do e-mail de aviso de novo agendamento |
+| `RESEND_API_KEY`, `EMAIL_FROM_NAME`, `EMAIL_FROM_ADDRESS` | envio do e-mail de aviso de novo agendamento via Resend |
 | `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_WHATSAPP_FROM` | opcional: liga o lembrete automático de WhatsApp |
 
 ## API
