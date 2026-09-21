@@ -14,6 +14,10 @@ COOKIE_NAME = "js_session"
 TOKEN_TTL_DAYS = 7
 
 
+def _cookie_secure() -> bool:
+    return os.environ.get("APP_URL", "").startswith("https://")
+
+
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
@@ -56,7 +60,8 @@ async def login(input: LoginRequest, response: Response):
         COOKIE_NAME,
         token,
         httponly=True,
-        samesite="lax",
+        samesite="none" if _cookie_secure() else "lax",
+        secure=_cookie_secure(),
         max_age=TOKEN_TTL_DAYS * 24 * 3600,
     )
     return SessionUser(email=owner_email)
