@@ -16,12 +16,12 @@ import asyncio
 import logging
 import os
 import re
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from urllib.parse import quote
 
 import httpx
+from sqlalchemy import select
 
-from lib.db import db
 from lib.dates import format_date_br, tomorrow_iso
 
 logger = logging.getLogger(__name__)
@@ -85,26 +85,34 @@ async def send_due_reminders() -> int:
     if not is_configured():
         logger.info("WhatsApp reminders skipped: Twilio not configured (painel quick-links still work)")
         return 0
-    query = {
-        "data": tomorrow_iso(),
-        "status": "pendente",
-        "reminder_sent": {"$ne": True},
-        "reminder_attempts": {"$lt": _MAX_ATTEMPTS},
-    }
-    docs = await db.appointments.find(query).to_list(100)
+
+    # Import local: evita ciclo de import no carregamento do módulo.
+    from database import AsyncSessionLocal
+    from db_models import Appointment as AppointmentRow
+
     sent = 0
-    for doc in docs:
-        body = reminder_message(doc["nome"], doc["servico"], doc["data"], doc.get("periodo"))
-        ok = await _send_whatsapp(client_e164(doc["numero"]), body)
-        update: dict = {"$inc": {"reminder_attempts": 1}}
-        if ok:
-            update["$set"] = {
-                "reminder_sent": True,
-                "reminder_sent_at": datetime.now(timezone.utc),
-            }
-        await db.appointments.update_one({"id": doc["id"]}, update)
-        if ok:
-            sent += 1
+    async with AsyncSessionLocal() as db:
+        result = await db.execute(
+            select(AppointmentRow)
+            .where(
+                AppointmentRow.data == tomorrow_iso(),
+                AppointmentRow.status == "pendente",
+                AppointmentRow.reminder_sent.is_(False),
+                AppointmentRow.reminder_attempts < _MAX_ATTEMPTS,
+            )
+            .limit(100)
+        )
+        rows = result.scalars().all()
+        for row in rows:
+            body = reminder_message(row.nome, row.servico, row.data, row.periodo)
+            ok = await _send_whatsapp(client_e164(row.numero), body)
+            row.reminder_attempts = (row.reminder_attempts or 0) + 1
+            if ok:
+                row.reminder_sent = True
+                row.reminder_sent_at = datetime.now(timezone.utc)
+                sent += 1
+        await db.commit()
+
     if sent:
         logger.info("WhatsApp reminders sent: %s", sent)
     return sent

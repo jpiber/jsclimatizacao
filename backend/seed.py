@@ -1,10 +1,15 @@
-"""Seed sample appointments — idempotent, not imported by server.py.
-Run with: cd /app/backend && python seed.py"""
+"""Dados de exemplo — agora no Supabase (PostgreSQL). Idempotente.
+
+Uso: cd /app/backend && python seed.py
+"""
 
 import asyncio
 from datetime import date, datetime, timedelta, timezone
 
-from lib.db import db, ensure_indexes
+from sqlalchemy import func, select
+
+from database import AsyncSessionLocal, engine
+from db_models import Appointment as AppointmentRow
 from lib.dates import today_iso
 
 TODAY = today_iso()
@@ -84,16 +89,20 @@ SAMPLES = [
 
 
 async def main() -> None:
-    existing = await db.appointments.count_documents({})
-    if existing > 0:
-        print(f"seed: {existing} agendamentos já existem — nada a fazer")
-        return
-    now = datetime.now(timezone.utc)
-    for i, sample in enumerate(SAMPLES):
-        doc = {**sample, "created_at": now - timedelta(hours=6 * i)}
-        await db.appointments.insert_one(doc)
-    await ensure_indexes()
+    async with AsyncSessionLocal() as session:
+        existing = (await session.execute(select(func.count(AppointmentRow.id)))).scalar() or 0
+        if existing > 0:
+            print(f"seed: {existing} agendamentos já existem — nada a fazer")
+            await engine.dispose()
+            return
+
+        now = datetime.now(timezone.utc)
+        for i, sample in enumerate(SAMPLES):
+            session.add(AppointmentRow(**sample, created_at=now - timedelta(hours=6 * i)))
+        await session.commit()
+
     print(f"seed: {len(SAMPLES)} agendamentos de exemplo inseridos")
+    await engine.dispose()
 
 
 if __name__ == "__main__":

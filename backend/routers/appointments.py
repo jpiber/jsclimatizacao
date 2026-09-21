@@ -1,12 +1,14 @@
-"""Appointments — public booking creation + owner-only management."""
+"""Appointments — criação pública + gestão restrita ao dono (Supabase/PostgreSQL)."""
 
 import asyncio
-from datetime import timezone
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException
-from pymongo import DESCENDING
+from sqlalchemy import delete, select
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from lib.db import db
+from database import get_db
+from db_models import Appointment as AppointmentRow
 from lib.dates import tomorrow_iso
 from lib.emailer import notify_owner_new_appointment
 from lib.whatsapp import reminder_message, wa_me_link
@@ -21,21 +23,35 @@ from routers.auth import SessionUser, get_current_user
 router = APIRouter(tags=["appointments"])
 
 
-def _normalize(doc: dict) -> dict:
-    """Motor returns naive datetimes — re-anchor them to UTC so Pydantic serialises
-    with the offset and `new Date(...)` parses correctly in the browser."""
-    created = doc.get("created_at")
-    if created and created.tzinfo is None:
-        doc["created_at"] = created.replace(tzinfo=timezone.utc)
-    return doc
+def _to_schema(row: AppointmentRow) -> Appointment:
+    """Row -> modelo da API. Postgres devolve datetime aware quando a coluna é
+    timestamptz, mas normalizamos por garantia (o JS precisa do offset)."""
+    created = row.created_at
+    if created is not None and created.tzinfo is None:
+        created = created.replace(tzinfo=timezone.utc)
+    return Appointment(
+        id=row.id,
+        nome=row.nome,
+        cpf=row.cpf,
+        email=row.email,
+        numero=row.numero,
+        endereco=row.endereco,
+        servico=row.servico,
+        data=row.data,
+        periodo=row.periodo,
+        observacoes=row.observacoes,
+        status=row.status,
+        created_at=created,
+    )
 
 
 @router.post("/appointments", response_model=Appointment, status_code=201)
-async def create_appointment(input: AppointmentCreate):
-    appointment = Appointment(**input.model_dump())
-    _ = await db.appointments.insert_one(appointment.model_dump())
-    # Owner email alert rides in the background — booking never waits on (or fails
-    # with) the email provider.
+async def create_appointment(input: AppointmentCreate, db: AsyncSession = Depends(get_db)):
+    row = AppointmentRow(**input.model_dump())
+    db.add(row)
+    await db.commit()
+    appointment = _to_schema(row)
+    # Aviso por e-mail em background — o agendamento nunca espera (nem falha com) o provedor.
     asyncio.create_task(
         notify_owner_new_appointment(
             nome=appointment.nome,
@@ -52,35 +68,40 @@ async def create_appointment(input: AppointmentCreate):
 
 
 @router.get("/appointments", response_model=list[Appointment])
-async def list_appointments(user: SessionUser = Depends(get_current_user)):
-    docs = await db.appointments.find().sort("created_at", DESCENDING).to_list(1000)
-    return [Appointment(**_normalize(doc)) for doc in docs]
+async def list_appointments(
+    user: SessionUser = Depends(get_current_user), db: AsyncSession = Depends(get_db)
+):
+    result = await db.execute(
+        select(AppointmentRow).order_by(AppointmentRow.created_at.desc()).limit(1000)
+    )
+    return [_to_schema(row) for row in result.scalars().all()]
 
 
 @router.get("/appointments/reminders", response_model=list[ReminderItem])
-async def list_reminders(user: SessionUser = Depends(get_current_user)):
-    """Tomorrow's pendente visits with the reminder message pre-built — the
-    dashboard shows them with a one-click wa.me send (and the Twilio loop marks
-    reminder_sent when it fires automatically)."""
-    docs = (
-        await db.appointments.find({"data": tomorrow_iso(), "status": "pendente"})
-        .sort("created_at", DESCENDING)
-        .to_list(1000)
+async def list_reminders(
+    user: SessionUser = Depends(get_current_user), db: AsyncSession = Depends(get_db)
+):
+    """Visitas de amanhã ainda pendentes, com a mensagem de lembrete pronta — o
+    painel mostra cada uma com envio em 1 clique no WhatsApp."""
+    result = await db.execute(
+        select(AppointmentRow)
+        .where(AppointmentRow.data == tomorrow_iso(), AppointmentRow.status == "pendente")
+        .order_by(AppointmentRow.created_at.desc())
     )
     items: list[ReminderItem] = []
-    for doc in docs:
-        message = reminder_message(doc["nome"], doc["servico"], doc["data"], doc.get("periodo"))
+    for row in result.scalars().all():
+        message = reminder_message(row.nome, row.servico, row.data, row.periodo)
         items.append(
             ReminderItem(
-                id=doc["id"],
-                nome=doc["nome"],
-                servico=doc["servico"],
-                data=doc["data"],
-                periodo=doc.get("periodo"),
-                numero=doc["numero"],
+                id=row.id,
+                nome=row.nome,
+                servico=row.servico,
+                data=row.data,
+                periodo=row.periodo,
+                numero=row.numero,
                 message=message,
-                whatsapp_url=wa_me_link(doc["numero"], message),
-                reminder_sent=bool(doc.get("reminder_sent")),
+                whatsapp_url=wa_me_link(row.numero, message),
+                reminder_sent=bool(row.reminder_sent),
             )
         )
     return items
@@ -91,17 +112,25 @@ async def update_appointment_status(
     id: str,
     input: AppointmentStatusUpdate,
     user: SessionUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
 ):
-    result = await db.appointments.update_one({"id": id}, {"$set": {"status": input.status}})
-    if result.matched_count == 0:
+    result = await db.execute(select(AppointmentRow).where(AppointmentRow.id == id))
+    row = result.scalar_one_or_none()
+    if row is None:
         raise HTTPException(status_code=404, detail="Agendamento não encontrado")
-    doc = await db.appointments.find_one({"id": id})
-    return Appointment(**_normalize(doc))
+    row.status = input.status
+    await db.commit()
+    return _to_schema(row)
 
 
 @router.delete("/appointments/{id}", status_code=204)
-async def delete_appointment(id: str, user: SessionUser = Depends(get_current_user)):
-    result = await db.appointments.delete_one({"id": id})
-    if result.deleted_count == 0:
+async def delete_appointment(
+    id: str,
+    user: SessionUser = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    result = await db.execute(delete(AppointmentRow).where(AppointmentRow.id == id))
+    if result.rowcount == 0:
         raise HTTPException(status_code=404, detail="Agendamento não encontrado")
+    await db.commit()
     return None
